@@ -1,0 +1,83 @@
+# Sean Reihani, sr9gv
+# Abdullah Mahmood, aam2vp
+
+import pygame
+import gamebox
+
+"""
+This will be a "bullet hell" game, with a rescue the princess element.
+The player will battle enemies in different levels of the world,
+collecting power-ups while avoiding losing all of his health.
+
+After beating all levels, the player will be able to face the boss level,
+containing the hardest enemy with a lot of health and different 
+attack styles.
+
+User input will require usage of the WASD keys to move and a mouse/trackpad
+to point and shoot projectiles at enemies
+
+Possible optional features: 
+- Possibly using animations for projectiles, animations for characters
+    when the characters are at rest, moving, or attacking
+- Collectibles to possibly increase attack damage, attacks per second,
+    health, shields
+- Health meter to show how many hits the player can take before dying
+    and having the game reset
+- Multiple levels of different difficulty enemies with different attack
+    patterns and health
+"""
+
+cam = gamebox.Camera(800, 600)
+title_text = [
+    gamebox.from_text(400, 150, "THE ADVENTURE OF LORENZO", 70, 'yellow'),
+    gamebox.from_text(400, 215, "Abdullah Mahmood, aam2vp", 20, "firebrick"),
+    gamebox.from_text(400, 235, "Sean Reihani, sr9gv", 20, "firebrick"),
+    gamebox.from_text(400, 300, "Welcome to The Adventure of Lorenzo! The goal of this game is to rescue the beautiful ", 25, 'white'),
+    gamebox.from_text(400, 315, "princess Theresa Sullivan. The game consists of three levels. To rescue the princess,", 25, 'white'),
+    gamebox.from_text(400, 330, "you must defeat the boss at the end of each level. The overworld is crawling with ", 25, 'white'),
+    gamebox.from_text(400, 345, "enemies. When defeated, these enemies drop coins that make you stronger, ", 25, 'white'),
+    gamebox.from_text(400, 360, "which might make boss battles easier. Best of luck, Ser Lorenzo!", 25, 'white'),
+    gamebox.from_text(400, 385, "Optional Elements: Animation, Enemies, Collectibles, Health, Multiple Levels", 25, 'white'),
+    gamebox.from_text(400, 435, "PRESS SPACE TO BEGIN", 30, 'blue')
+]
+
+title_screen_on = True
+level1_on = False
+level2_on = False
+level3_on = False
+final_level_on = False
+
+
+# Draws a title screen
+def title_screen():
+    cam.clear('black')
+    for text in title_text:
+        cam.draw(text)
+    cam.display()
+
+
+# game world
+def level1():
+    cam.clear('tan')
+    cam.display()
+
+
+on_level = 0
+
+
+def tick(keys):
+    global on_level, title_screen_on, level1_on, level2_on, level3_on, final_level_on
+    if pygame.K_SPACE in keys and on_level == 0:
+        on_level = 1
+        keys.remove(pygame.K_SPACE)
+
+    if on_level == 1:  # Game begins after space is pressed
+        title_screen_on = False
+        level1()
+
+    if title_screen_on:
+        title_screen()
+
+
+ticks_per_second = 50
+gamebox.timer_loop(ticks_per_second, tick)
