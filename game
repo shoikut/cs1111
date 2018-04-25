@@ -54,7 +54,7 @@ enemy_count = 9     # draws four more random enemies in addition to the preset o
 
 boulders = []  # creates "boulders" so player can notice movement
 
-while len(boulders) < 100:
+while len(boulders) < 175:
     boulders.append(
         gamebox.from_color(
             random.randint(-1600, 1601), random.randint(-1600, 1601), 'grey', 30, 30))
