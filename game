@@ -41,6 +41,10 @@ title_text = [
     gamebox.from_text(400, 435, "PRESS SPACE TO BEGIN", 30, 'blue')
 ]
 
+arrows = [gamebox.from_color(-300, 300, 'black', 30, 15)]
+
+character = gamebox.from_color(300, 200, 'green', 25, 25)
+
 title_screen_on = True
 level1_on = False
 level2_on = False
@@ -57,9 +61,35 @@ def title_screen():
 
 
 # game world
-def level1():
+def level1(keys):
+    #global cam
     cam.clear('tan')
+    cam.draw(character)
     cam.display()
+
+    for arrow in arrows:
+       arrow.move_speed()
+
+    #  Character movement
+    if pygame.K_a in keys:
+        character.x -= 4
+    if pygame.K_d in keys:
+        character.x += 4
+    if pygame.K_w in keys:
+        character.y -= 4
+    if pygame.K_s in keys:
+        character.y += 4
+    if pygame.K_SPACE in keys:
+        arrows.append(
+            gamebox.from_color(-300, 300, 'pink', 30, 15),
+        )
+        arrows[-1].speedx = 10
+        arrows[-1].center = character.center
+        keys.remove(pygame.K_SPACE)
+
+    # Camera follows player
+    # cam.x = character.x
+    # cam.y = character.y
 
 
 on_level = 0
@@ -73,11 +103,12 @@ def tick(keys):
 
     if on_level == 1:  # Game begins after space is pressed
         title_screen_on = False
-        level1()
+
+        level1(keys)
 
     if title_screen_on:
         title_screen()
 
 
-ticks_per_second = 50
+ticks_per_second = 60
 gamebox.timer_loop(ticks_per_second, tick)
