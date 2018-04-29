@@ -25,6 +25,7 @@ Rocks: https://openclipart.org/detail/209758/harvestable-resources-rock
 Trees: https://openclipart.org/detail/9491/rpg-map-symbols-deserted-tree
 Character Sprites (edited): http://goldenhylian.tripod.com/l2plink.gif
 Goblin: https://openclipart.org/detail/65551/goblin-warrior
+Torch: https://opengameart.org/content/animated-torch
 
 """
 
