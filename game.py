@@ -87,15 +87,15 @@ sheet = [
 ]
 
 
-while len(boulders) < 125:
+while len(boulders) < 140:
     boulders.append(
         gamebox.from_image(
-            random.randint(-1600, 1601),  random.randint(-1600, 1601),  'rock.png'))
+            random.randint(-1850, 1851),  random.randint(-1600, 1601),  'rock.png'))
 
-while len(trees) < 75:
+while len(trees) < 85:
     trees.append(
         gamebox.from_image(
-            random.randint(-1600, 1601),  random.randint(-1600, 1601),  'tree.png'))
+            random.randint(-1850, 1851),  random.randint(-1600, 1601),  'tree.png'))
 
 while len(torches) < 50:
     torches.append(gamebox.from_image(random.randint(-1600, 1601), random.randint(-1600, 1601), sheet[0]))
@@ -390,6 +390,11 @@ def level1(keys):
 
     cam.clear('tan')
 
+    upper_boundary = gamebox.from_color(0, -1800, 'tan', 3600, 1)
+    lower_boundary = gamebox.from_color(0, 1800, 'tan', 3600, 1)
+    left_boundary = gamebox.from_color(-1800, 0, 'tan', 1, 3600)
+    right_boundary = gamebox.from_color(1800, 0, 'tan', 1, 3600)
+
     cam.draw(character)
 
     for boulder in boulders:
@@ -408,9 +413,17 @@ def level1(keys):
 
     cam.draw(health())
 
+    if character.touches(upper_boundary) or character.touches(lower_boundary) or character.touches(left_boundary) or character.touches(right_boundary):
+        cam.draw("Turn around, ser!", 75, 'blue', 400, 300)
+
     control(keys)
     monsters(10)
     cam.display()
+
+    character.move_to_stop_overlapping(upper_boundary)
+    character.move_to_stop_overlapping(lower_boundary)
+    character.move_to_stop_overlapping(left_boundary)
+    character.move_to_stop_overlapping(right_boundary)
 
     if len(enemies) == 0:
         enemy_count = 10
@@ -425,6 +438,12 @@ def level2(keys):
     ticks += 1
 
     cam.clear('black')
+
+    upper_boundary = gamebox.from_color(0, -1800, 'black', 3600, 1)
+    lower_boundary = gamebox.from_color(0, 1800, 'black', 3600, 1)
+    left_boundary = gamebox.from_color(-1800, 0, 'black', 1, 3600)
+    right_boundary = gamebox.from_color(1800, 0, 'black', 1, 3600)
+
     cam.draw(character)
 
     for torch in torches:
@@ -441,9 +460,17 @@ def level2(keys):
 
     cam.draw(health())
 
+    if character.touches(upper_boundary) or character.touches(lower_boundary) or character.touches(left_boundary) or character.touches(right_boundary):
+        cam.draw("Turn around, ser!", 75, 'orange', 400, 300)
+
     control(keys)
     monsters(25)
     cam.display()
+
+    character.move_to_stop_overlapping(upper_boundary)
+    character.move_to_stop_overlapping(lower_boundary)
+    character.move_to_stop_overlapping(left_boundary)
+    character.move_to_stop_overlapping(right_boundary)
 
     if len(enemies) == 0:
         enemy_count = 25
