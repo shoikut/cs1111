@@ -447,7 +447,9 @@ def level2(keys):
 
     if len(enemies) == 0:
         enemy_count = 25
-        ticks = 1
+        ticks = 0
+        character.x, cam.x = 400, 400
+        character.y, cam.y = 450, 300
         on_level = "final"
 
 
