@@ -11,10 +11,11 @@ attack styles.
 User input will require usage of the WASD keys to move and a the spacebar to fire arrows at enemies.
 
 Optional features:
--Enemies
--Scrolling level
--Health Meter
--Multiple Levels
+- Enemies
+- Scrolling level
+- Health Meter
+- Multiple Levels
+- Collectables (health packs on boss level)
 
 
 Image Sources:
@@ -24,7 +25,12 @@ Trees: https://openclipart.org/detail/9491/rpg-map-symbols-deserted-tree
 Character Sprites (edited): http://goldenhylian.tripod.com/l2plink.gif
 Goblin: https://openclipart.org/detail/65551/goblin-warrior
 Torch: https://opengameart.org/content/animated-torch
-
+Dagger: http://images.clipartpanda.com/equivalent-clipart-fantasy-sword.png
+Saw: https://icon.kisspng.com/20180317/cbq/kisspng-circular-saw-blade-clip-art-saw-blade-cliparts-5aac9d0d9a44e5.6756357415212618376319.jpg
+Goblin boss: https://vignette.wikia.nocookie.net/bloodbrothersgame/images/2/2a/Goblin_King_Figure.png/revision/latest?cb=20130301125317
+Cave: http://i.imgur.com/1lSwR3h.png
+Boss room: https://steamuserimages-a.akamaihd.net/ugc/848079540097334421/D19833070A5F3B85F73F818A2AF63F50D9C081DD/
+Health pack: https://cdn0.iconfinder.com/data/icons/large-glossy-icons/512/Add.png
 """
 
 cam = gamebox.Camera(800, 600)
@@ -39,12 +45,27 @@ title_text = [
     gamebox.from_text(400, 360, "which might make boss battles easier. Best of luck, Ser Lorenzo!", 25, 'white'),
     gamebox.from_text(400, 385, "Optional Elements: Enemies, Scrolling level, Health, Multiple Levels", 25, 'white'),
     gamebox.from_text(400, 435, "PRESS SPACE TO BEGIN", 30, 'blue'),
-    gamebox.from_text(400, 520, "CONTROLS: Use WASD to move and SPACE to shoot in the direction you are facing!", 25, "white"),
-    gamebox.from_text(400, 540, "Cheat: Press ENTER  on level 1 to skip to the boss", 15, "white")
+    gamebox.from_text(400, 520, "CONTROLS: Use WASD/Arrows Keys to move and SPACE to shoot in the direction you are facing!", 25, "white"),
+    gamebox.from_text(400, 540, "Tip: Hold SPACE  to autofire   Cheat: Press ENTER  to skip levels", 15, "white")
 ]
 defeated_boss_text = [
     gamebox.from_text(400, 150, "CONGRATULATIONS, HERO", 50, "white"),
     gamebox.from_text(400, 200, "YOU HAVE DEFEATED THE EVIL GOBLIN KING!", 50, "white")
+]
+victory_text = [
+    gamebox.from_text(400, 200, "CONGRATULATIONS!", 60, "white"),
+    gamebox.from_text(400, 250, "You have bested the Goblin King", 60, "white"),
+    gamebox.from_text(400, 300, "and saved the Princess!", 60, "white")
+]
+defeated_text = [
+    gamebox.from_text(400, 250, "YOUR ADVENTURE HAS", 60, "red"),
+    gamebox.from_text(400, 300, "ENDED", 100, "red")
+]
+walls = [
+    gamebox.from_color(-2000, 0, "black", 50, 3600),
+    gamebox.from_color(2000, 0, "black", 50, 3600),
+    gamebox.from_color(0, -1800, "black", 4050, 50),
+    gamebox.from_color(0, 1800, "black", 4050, 50)
 ]
 
 # Character info
@@ -58,6 +79,11 @@ boss.scale_by(.25)
 
 boss_room = gamebox.from_image(400, 300, "boss_room.png")
 boss_room.scale_by(.78)
+
+# Health packs in boss room
+health_packs = []
+hp_up = gamebox.from_image(-300, 300, "hp_up.png")
+hp_up.scale_by(.2)
 
 # generates arrows
 horizontal_arrows = [gamebox.from_image(-30000, 30000, 'horizontal_arrow.png')]
@@ -85,7 +111,8 @@ sheet = [
     sheet[4],
     sheet[5],
 ]
-
+cave = gamebox.from_image(400, 300, "cave.png")
+cave.scale_by(10)
 
 while len(boulders) < 140:
     boulders.append(
@@ -97,8 +124,8 @@ while len(trees) < 85:
         gamebox.from_image(
             random.randint(-1850, 1851),  random.randint(-1600, 1601),  'tree.png'))
 
-while len(torches) < 50:
-    torches.append(gamebox.from_image(random.randint(-1600, 1601), random.randint(-1600, 1601), sheet[0]))
+while len(torches) < 100:
+    torches.append(gamebox.from_image(random.randint(-1700, 1701), random.randint(-1700, 1701), sheet[0]))
 
 direction = "forward"  # sets direction variable for shooting
 cool_down = 0  # initializes cool_down timer variable
@@ -175,7 +202,8 @@ def boss_phase1():
 
 
 def boss_phase2():
-    # Move boss back to starting position
+    # Boss goes to starting position and starts firing waves of medium-high speed, low damage projectiles
+    # away from itself and fires the occasional slow, medium damage projectile
     if boss.x < 400:
         boss.x += .5
         if boss.x < 395:
@@ -199,17 +227,10 @@ def boss_phase2():
 
 
 def boss_phase3():
+    # Phase 2, but moves towards player at double speed of Phase 1
     boss_attack1()
     boss_attack2()
     boss_move(1)
-
-# def boss_phase2():
-# Boss goes to a set position and starts firing waves of medium-high speed, low damage projectiles
-# away from itself and fires the occasional slow, medium damage projectile
-
-
-# def boss_phase3():
-# Similar to phase 2, but now boss slowly moves toward player
 
 
 # Draws a title screen
@@ -220,53 +241,90 @@ def title_screen():
     cam.display()
 
 
+# Draws a victory screen
+def victory_screen():
+    cam.clear("black")
+    for text in victory_text:
+        cam.draw(text)
+
+
+# Draws a defeat screen
+def defeat_screen():
+    cam.clear("black")
+    for text in defeated_text:
+        cam.draw(text)
+
+
+def transition(keys):
+    global on_level
+    cam.clear("black")
+    cam.draw(gamebox.from_text(400, 300, "You are about to fight the boss, good luck", 40, "white"))
+    cam.draw(gamebox.from_text(400, 350, "Health packs may spawn if you need aid!", 30, "green"))
+    cam.draw(gamebox.from_text(400, 450, "PRESS SPACE TO CONTINUE", 35, "blue"))
+    if pygame.K_SPACE in keys:
+        on_level = "final"
+        keys.remove(pygame.K_SPACE)
+
+
 def control(keys):
     #  Character movement and shooting direction
     global character, cool_down, direction, cam_locked
 
-    if pygame.K_a in keys:
+    if pygame.K_a in keys or pygame.K_LEFT in keys:
         character = gamebox.from_image(character.x, character.y, "character_left.png")
         character.scale_by(1.25)
         direction = "left"
-        if pygame.K_s in keys and pygame.K_w in keys:
+        if (pygame.K_s in keys or pygame.K_DOWN in keys) and (pygame.K_w in keys or pygame.K_UP in keys):
             character.x -= 4
-        elif pygame.K_s in keys or pygame.K_w in keys:
+        elif (pygame.K_s in keys or pygame.K_DOWN in keys) or (pygame.K_w in keys or pygame.K_UP in keys):
             character.x -= math.sqrt(12)
         else:
             character.x -= 4
 
-    if pygame.K_d in keys:
+    if pygame.K_d in keys or pygame.K_RIGHT in keys:
         character = gamebox.from_image(character.x, character.y, "character_right.png")
         character.scale_by(1.25)
         direction = "right"
-        if pygame.K_s in keys and pygame.K_w in keys:
+        if (pygame.K_s in keys or pygame.K_DOWN in keys) and (pygame.K_w in keys or pygame.K_UP in keys):
             character.x += 4
-        elif pygame.K_s in keys or pygame.K_w in keys:
+        elif (pygame.K_s in keys or pygame.K_DOWN in keys) or (pygame.K_w in keys or pygame.K_UP in keys):
             character.x += math.sqrt(12)
         else:
             character.x += 4
 
-    if pygame.K_w in keys:
+    if pygame.K_w in keys or pygame.K_UP in keys:
         character = gamebox.from_image(character.x, character.y, "character_back.png")
         character.scale_by(1.25)
         direction = "up"
-        if pygame.K_a in keys and pygame.K_d in keys:
+        if (pygame.K_a in keys or pygame.K_LEFT in keys) and (pygame.K_d in keys or pygame.K_RIGHT in keys):
             character.y -= 4
-        elif pygame.K_a in keys or pygame.K_d in keys:
+        elif (pygame.K_a in keys or pygame.K_LEFT in keys) or (pygame.K_d in keys or pygame.K_RIGHT in keys):
             character.y -= math.sqrt(12)
         else:
             character.y -= 4
 
-    if pygame.K_s in keys:
+    if pygame.K_s in keys or pygame.K_DOWN in keys:
         character = gamebox.from_image(character.x, character.y, "character_front.png")
         character.scale_by(1.25)
         direction = "down"
-        if pygame.K_a in keys and pygame.K_d in keys:
+        if (pygame.K_a in keys or pygame.K_LEFT in keys) and (pygame.K_d in keys or pygame.K_RIGHT in keys):
             character.y += 4
-        elif pygame.K_a in keys or pygame.K_d in keys:
+        elif (pygame.K_a in keys or pygame.K_LEFT in keys) or (pygame.K_d in keys or pygame.K_RIGHT in keys):
             character.y += math.sqrt(12)
         else:
             character.y += 4
+    if character.x > 2000:
+        character.x = 1975
+    elif character.x < -2000:
+        character.x = -1975
+    if character.y > 2000:
+        character.y = 1975
+    elif character.y < -2000:
+        character.y = -1975
+
+    for wall in walls:
+        if character.touches(wall):
+            character.move_to_stop_overlapping(wall)
 
     if pygame.K_SPACE in keys and cool_down == 0:
         horizontal_arrows.append(
@@ -279,22 +337,18 @@ def control(keys):
         if direction == "left":
             horizontal_arrows[-1].speedx = -10
             horizontal_arrows[-1].center = character.center
-            # keys.remove(pygame.K_SPACE)
 
         elif direction == "right":
             horizontal_arrows[-1].speedx = 10
             horizontal_arrows[-1].center = character.center
-            # keys.remove(pygame.K_SPACE)
 
         elif direction == "up":
             vertical_arrows[-1].speedy = -10
             vertical_arrows[-1].center = character.center
-            # keys.remove(pygame.K_SPACE)
 
         elif direction == "down":
             vertical_arrows[-1].speedy = 10
             vertical_arrows[-1].center = character.center
-            # keys.remove(pygame.K_SPACE)
 
         cool_down = 30  # sets a half-second cool down timer on arrows
 
@@ -343,7 +397,6 @@ def monsters(strength):
             elif character.y > enemy.y:
                 enemy.y += 3
 
-
     for enemy in enemies:
         #enemy.move_to_stop_overlapping(enemy)  <-- Buggy, don't try
 
@@ -374,14 +427,14 @@ def monsters(strength):
                 character.y += 50
             health_level -= strength
 
+    cam.draw("Enemies Left: " + str(len(enemies)), 20, 'blue', 675, 25)  # prints remaining # of enemies
     if health_level <= 0:
         health()
-        cam.draw("Game Over!", 120, 'red', 385, 300)
+        cam.clear("black")
+        cam.x, cam.y = 400, 300
+        defeat_screen()
         cam.display()
         gamebox.pause()
-
-    cam.draw("Enemies Left: " + str(len(enemies)), 20, 'blue', 675, 25)  # prints remaining # of enemies
-    #cam.display()
 
 
 # game world
@@ -389,11 +442,6 @@ def level1(keys):
     global cam, cool_down, direction, enemy_count, enemy_health, enemy_x, enemy_y, health_level, on_level
 
     cam.clear('tan')
-
-    upper_boundary = gamebox.from_color(0, -1800, 'tan', 3600, 1)
-    lower_boundary = gamebox.from_color(0, 1800, 'tan', 3600, 1)
-    left_boundary = gamebox.from_color(-1800, 0, 'tan', 1, 3600)
-    right_boundary = gamebox.from_color(1800, 0, 'tan', 1, 3600)
 
     cam.draw(character)
 
@@ -411,22 +459,16 @@ def level1(keys):
     for arrow in vertical_arrows:
         cam.draw(arrow)
 
-    cam.draw(health())
-
-    if character.touches(upper_boundary) or character.touches(lower_boundary) or character.touches(left_boundary) or character.touches(right_boundary):
-        cam.draw("Turn around, ser!", 75, 'blue', 400, 300)
-
     control(keys)
+    for wall in walls:
+        cam.draw(wall)
+    cam.draw(health())
     monsters(10)
     cam.display()
 
-    character.move_to_stop_overlapping(upper_boundary)
-    character.move_to_stop_overlapping(lower_boundary)
-    character.move_to_stop_overlapping(left_boundary)
-    character.move_to_stop_overlapping(right_boundary)
-
     if len(enemies) == 0:
         enemy_count = 10
+        character.x, character.y = 0, 0
         on_level = 2
 
 
@@ -438,11 +480,7 @@ def level2(keys):
     ticks += 1
 
     cam.clear('black')
-
-    upper_boundary = gamebox.from_color(0, -1800, 'black', 3600, 1)
-    lower_boundary = gamebox.from_color(0, 1800, 'black', 3600, 1)
-    left_boundary = gamebox.from_color(-1800, 0, 'black', 1, 3600)
-    right_boundary = gamebox.from_color(1800, 0, 'black', 1, 3600)
+    cam.draw(cave)
 
     cam.draw(character)
 
@@ -457,20 +495,14 @@ def level2(keys):
         cam.draw(arrow)
     for arrow in vertical_arrows:
         cam.draw(arrow)
+    for wall in walls:
+        cam.draw(wall)
 
     cam.draw(health())
-
-    if character.touches(upper_boundary) or character.touches(lower_boundary) or character.touches(left_boundary) or character.touches(right_boundary):
-        cam.draw("Turn around, ser!", 75, 'orange', 400, 300)
 
     control(keys)
     monsters(25)
     cam.display()
-
-    character.move_to_stop_overlapping(upper_boundary)
-    character.move_to_stop_overlapping(lower_boundary)
-    character.move_to_stop_overlapping(left_boundary)
-    character.move_to_stop_overlapping(right_boundary)
 
     if len(enemies) == 0:
         enemy_count = 25
@@ -491,8 +523,18 @@ def final_level(keys):
     cam.draw(health())
     cam.draw(boss_health())
     cam.draw(character)
+    if ticks % 600 == 0 and len(health_packs) < 5:
+        health_packs.append(gamebox.from_image(random.randint(100, 701), random.randint(100, 501), "hp_up.png"))
+        health_packs[-1].scale_by(.025)
+    for health_pack in health_packs:
+        cam.draw(health_pack)
+    for health_pack in health_packs:
+        if character.touches(health_pack):
+            health_packs.remove(health_pack)
+            health_level += 10
+            if health_level > 100:
+                health_level = 100
     cam.draw(boss)
-    # cam.draw(gamebox.from_text(character.x, character.y, "BOSS LEVEL: TO BE DEVELOPED", 50, "red"))
     control(keys)
 
     # Keep player in the boss arena and not clipping through the boss
@@ -506,7 +548,7 @@ def final_level(keys):
         character.y = 45
     if character.touches(boss):
         character.move_to_stop_overlapping(boss)
-        health_level -= 20
+        health_level -= 24
         if character.x > boss.x:
             character.x += 15
         elif character.x < boss.x:
@@ -520,12 +562,12 @@ def final_level(keys):
     for arrow in horizontal_arrows:
         if arrow.touches(boss):
             horizontal_arrows.remove(arrow)
-            boss_health_level -= 2
+            boss_health_level -= 1.5
         cam.draw(arrow)
     for arrow in vertical_arrows:
         if arrow.touches(boss):
             vertical_arrows.remove(arrow)
-            boss_health_level -= 2
+            boss_health_level -= 1.5
         cam.draw(arrow)
 
     for dagger in daggers_up:
@@ -533,7 +575,7 @@ def final_level(keys):
         cam.draw(dagger)
         if dagger.touches(character):
             daggers_up.remove(dagger)
-            health_level -= 15
+            health_level -= 20
     for dagger in daggers_up:
         if dagger.y < -100:
             daggers_up.remove(dagger)
@@ -542,7 +584,7 @@ def final_level(keys):
         cam.draw(dagger)
         if dagger.touches(character):
             daggers_down.remove(dagger)
-            health_level -= 15
+            health_level -= 20
     for dagger in daggers_down:
         if dagger.y > 700:
             daggers_down.remove(dagger)
@@ -551,7 +593,7 @@ def final_level(keys):
         cam.draw(dagger)
         if dagger.touches(character):
             daggers_left.remove(dagger)
-            health_level -= 15
+            health_level -= 20
     for dagger in daggers_left:
         if dagger.x < -100:
             daggers_left.remove(dagger)
@@ -560,7 +602,7 @@ def final_level(keys):
         cam.draw(dagger)
         if dagger.touches(character):
             daggers_right.remove(dagger)
-            health_level -= 15
+            health_level -= 20
     for dagger in daggers_right:
         if dagger.x > 900:
             daggers_right.remove(dagger)
@@ -571,7 +613,7 @@ def final_level(keys):
         cam.draw(saw)
         if saw.touches(character):
             saw_tr.remove(saw)
-            health_level -= 4
+            health_level -= 6
     for saw in saw_tr:
         if saw.x >= 900 or saw.y <= -100:
             saw_tr.remove(saw)
@@ -581,7 +623,7 @@ def final_level(keys):
         cam.draw(saw)
         if saw.touches(character):
             saw_tl.remove(saw)
-            health_level -= 4
+            health_level -= 6
     for saw in saw_tl:
         if saw.x <= -100 or saw.y <= -100:
             saw_tl.remove(saw)
@@ -591,7 +633,7 @@ def final_level(keys):
         cam.draw(saw)
         if saw.touches(character):
             saw_bl.remove(saw)
-            health_level -= 4
+            health_level -= 6
     for saw in saw_bl:
         if saw.x <= -100 or saw.y >= 700:
             saw_bl.remove(saw)
@@ -601,36 +643,36 @@ def final_level(keys):
         cam.draw(saw)
         if saw.touches(character):
             saw_br.remove(saw)
-            health_level -= 4
+            health_level -= 6
     for saw in saw_br:
         if saw.x >= 900 or saw.y >= 700:
             saw_br.remove(saw)
 
+    cam.draw(health()), cam.draw(boss_health())
     # Boss health milestones
     if boss_health_level <= 0:
         gamebox.pause()
-        for text in defeated_boss_text:
-            cam.draw(text)
-            cam.display()
+        cam.clear("black")
+        victory_screen()
     elif 0 < boss_health_level <= 33:
         boss_phase3()
-        if ticks % 90 == 0:
-            print("Boss is fighting for its life!")
+        # if ticks % 90 == 0:
+        #     print("Boss is fighting for its life!")
     elif 33 < boss_health_level <= 67:
         boss_phase2()
-        if ticks % 90 == 0:
-            print("Boss is getting desperate!")
+        # if ticks % 90 == 0:
+        #     print("Boss is getting desperate!")
     elif 67 < boss_health_level <= 100:
         if ticks > 60:
             boss_phase1()
-        if ticks % 90 == 0:
-            print("Boss is toying with you.")
-
+        # if ticks % 90 == 0:
+        #     print("Boss is toying with you.")
+    if ticks <= 300:
+        cam.draw(gamebox.from_text(640, 55, "Health packs now spawn occasionally!", 25, "green"))
     if health_level <= 0:
         gamebox.pause()
-        cam.draw(gamebox.from_text(400, 300, "YOU HAVE DIED", 100, "white"))
-
-    cam.draw(health()), cam.draw(boss_health())
+        cam.clear("black")
+        defeat_screen()
 
     cam.display()
 
@@ -639,15 +681,21 @@ on_level = 0
 
 
 def tick(keys):
-    global enemy_count, ticks, on_level, title_screen_on, level1_on, level2_on, final_level_on, cam_locked
+    global enemy_count, enemies, ticks, on_level, title_screen_on, level1_on, level2_on, final_level_on, cam_locked
     if pygame.K_RETURN in keys and (on_level == 1 or on_level == 2):
-        character.x = 400
-        character.y = 300
-        cam.x = 400
-        cam.y = 300
-        on_level = "final"
-        ticks = 0
-        keys.remove(pygame.K_RETURN)
+        if on_level == 1:
+            on_level = 2
+            keys.remove(pygame.K_RETURN)
+        elif on_level == 2:
+            character.x = 400
+            character.y = 300
+            cam.x = 400
+            cam.y = 300
+            on_level = "final"
+            ticks = 0
+            keys.remove(pygame.K_RETURN)
+        # elif on_level == 3:
+        #     on_level = "final"
 
     if pygame.K_SPACE in keys and on_level == 0:
         on_level = 1
